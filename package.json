@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --port 18466",
     "build": "vue-tsc --noEmit -p tsconfig.app.json && vite build",
+    "test:revision": "node -e \"require('esbuild').build({entryPoints:['scripts/verify-revision.mts'],bundle:true,platform:'node',format:'cjs',outfile:'/tmp/verify-revision.cjs',logLevel:'silent'}).then(()=>{require('/tmp/verify-revision.cjs')}).catch(e=>{console.error(e);process.exit(1)})\"",
     "preview": "vite preview --port 18466"
   },
   "dependencies": {
