@@ -52,9 +52,22 @@ function draw() {
   })
   props.defects.filter((item) => item.segmentId === props.segment!.id).forEach((defect) => {
     const x = padding + ((defect.mileage - props.segment!.startMileage) / (props.segment!.endMileage - props.segment!.startMileage)) * (width - padding * 2)
-    ctx.fillStyle = defect.status === '已关闭' ? '#43876b' : '#b84239'
-    ctx.beginPath(); ctx.moveTo(x, trackY - 18); ctx.lineTo(x - 7, trackY - 31); ctx.lineTo(x + 7, trackY - 31); ctx.closePath(); ctx.fill()
-    ctx.fillStyle = '#334241'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(defect.type, x, trackY - 36)
+    const invalid = defect.status === '已失效'
+    if (invalid) {
+      // 已被补测/撤回修订的缺陷：只保留灰色空心虚线三角与×，不再表示有效超限
+      ctx.strokeStyle = '#9aa8a7'
+      ctx.fillStyle = 'rgba(220,226,227,.55)'
+      ctx.setLineDash([3, 3])
+      ctx.lineWidth = 1.2
+      ctx.beginPath(); ctx.moveTo(x, trackY - 18); ctx.lineTo(x - 7, trackY - 31); ctx.lineTo(x + 7, trackY - 31); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.setLineDash([])
+      ctx.beginPath(); ctx.moveTo(x - 3, trackY - 27); ctx.lineTo(x + 3, trackY - 21); ctx.moveTo(x + 3, trackY - 27); ctx.lineTo(x - 3, trackY - 21); ctx.stroke()
+    } else {
+      ctx.fillStyle = defect.status === '已关闭' ? '#43876b' : '#b84239'
+      ctx.beginPath(); ctx.moveTo(x, trackY - 18); ctx.lineTo(x - 7, trackY - 31); ctx.lineTo(x + 7, trackY - 31); ctx.closePath(); ctx.fill()
+    }
+    ctx.fillStyle = invalid ? '#9aa8a7' : '#334241'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'
+    const label = invalid ? `${defect.type}·失效` : defect.type
+    ctx.fillText(label, x, trackY - 36)
   })
   if (selectedMileage.value !== null) {
     const x = padding + ((selectedMileage.value - props.segment.startMileage) / (props.segment.endMileage - props.segment.startMileage)) * (width - padding * 2)
@@ -81,6 +94,6 @@ watch([() => props.segment, () => props.defects, zoom, selectedMileage], draw, {
       <div><v-btn size="x-small" variant="outlined" @click="zoom = Math.max(.7, zoom - .1)">缩小</v-btn><v-btn size="x-small" variant="outlined" @click="zoom = Math.min(1.3, zoom + .1)">放大</v-btn></div>
     </div>
     <canvas ref="canvas" :style="{ transform: `scale(${zoom})`, transformOrigin: 'left center' }" @click="locate" />
-    <div class="canvas-note">红点表示超限，三角标记表示缺陷；点击里程可定位到最近明细。</div>
+    <div class="canvas-note">红点表示当前有效读数超限；实心三角为有效缺陷，灰色虚线三角为已被补测修订/撤回的失效缺陷；曲线与点位只显示当前有效读数。点击里程可定位。</div>
   </div>
 </template>
